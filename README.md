@@ -1,0 +1,2 @@
+# Dashboard
+Discord bot dashboard
