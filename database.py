@@ -1,7 +1,7 @@
-iimport json
-from pathlib import Path
+import os
 
-DB_FILE = Path("data.json")
+DB = "/workspace/database.db"
+conn = sqlite3.connect(DB)
 
 def load_db():
     if not DB_FILE.exists():
