@@ -1,0 +1,21 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h1>Server: {{ guild.id }}</h1>
+<p>Prefix: <span id="prefix">{{ guild.prefix }}</span></p>
+
+
+<input id="new" placeholder="Neues Prefix" />
+<button id="save">Speichern</button>
+
+
+<script>
+document.getElementById("save").onclick = async () => {
+let p = document.getElementById("new").value;
+let res = await fetch(`/api/set_prefix/{{ guild.id }}`, {
+method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({prefix:p})
+});
+let j = await res.json();
+if(j.success) document.getElementById('prefix').innerText = j.prefix;
+};
+</script>
+{% endblock %}
