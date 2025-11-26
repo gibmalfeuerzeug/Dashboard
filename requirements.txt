@@ -1,4 +1,5 @@
-Flask
-python-dotenv
-requests
 discord.py
+fastapi
+uvicorn
+jinja2
+python-multipart
