@@ -1,97 +1,49 @@
-from flask import Flask, session, redirect, request, render_template, jsonify
-import requests
-import os
-from urllib.parse import urlencode
-from database import get_guild, set_prefix, get_or_create_guild
-from dotenv import load_dotenv
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+import uvicorn
 
+from database import get_guild, get_or_create_guild, set_prefix
 
-load_dotenv()
+app = FastAPI()
 
-CLIENT_ID = os.getenv('CLIENT_ID')
-CLIENT_SECRET = os.getenv('CLIENT_SECRET')
-REDIRECT_URI = os.getenv('REDIRECT_URI')
-SECRET_KEY = os.getenv('SECRET_KEY', 'dev')
+# HTML Templates
+templates = Jinja2Templates(directory=".")
 
-app = Flask(__name__)
-app.secret_key = SECRET_KEY
+# Static files (CSS)
+app.mount("/static", StaticFiles(directory="."), name="static")
 
+@app.get("/")
+async def index(request: Request):
+    # Beispiel: Liste aller Guilds holen
+    # Wenn du eine Liste möchtest, musst du in der DB eine Guilds-Tabelle füllen
+    return templates.TemplateResponse("index.html", {"request": request})
 
-# --- Login ---
-@app.route('/login')
-def login():
-    params = {
-        'client_id': CLIENT_ID,
-        'redirect_uri': REDIRECT_URI,
-        'response_type': 'code',
-        'scope': 'identify guilds'
-    }
-    return redirect("https://discord.com/api/oauth2/authorize?" + urlencode(params))
-
-
-# --- Callback ---
-@app.route('/callback')
-def callback():
-    code = request.args.get('code')
-
-    token = requests.post(
-        'https://discord.com/api/oauth2/token',
-        data={
-            'client_id': CLIENT_ID,
-            'client_secret': CLIENT_SECRET,
-            'grant_type': 'authorization_code',
-            'code': code,
-            'redirect_uri': REDIRECT_URI,
-        },
-        headers={'Content-Type': 'application/x-www-form-urlencoded'}
-    ).json()
-
-    access = token['access_token']
-
-    user = requests.get(
-        'https://discord.com/api/users/@me',
-        headers={"Authorization": f"Bearer {access}"}
-    ).json()
-
-    guilds = requests.get(
-        'https://discord.com/api/users/@me/guilds',
-        headers={"Authorization": f"Bearer {access}"}
-    ).json()
-
-    session['user'] = user
-    session['guilds'] = guilds
-
-    return redirect('/')
-
-
-# --- Index ---
-@app.route('/')
-def index():
-    return render_template(
-        'index.html',
-        user=session.get('user'),
-        guilds=session.get('guilds')
+@app.get("/guild/{guild_id}")
+async def guild_page(request: Request, guild_id: int):
+    guild = get_or_create_guild(guild_id)
+    return templates.TemplateResponse(
+        "guild.html",
+        {
+            "request": request,
+            "guild_id": guild[0],
+            "prefix": guild[1]
+        }
     )
 
+@app.get("/guild/{guild_id}/set_prefix")
+async def update_prefix(request: Request, guild_id: int, prefix: str):
+    set_prefix(guild_id, prefix)
+    guild = get_or_create_guild(guild_id)
+    return templates.TemplateResponse(
+        "guild.html",
+        {
+            "request": request,
+            "guild_id": guild[0],
+            "prefix": guild[1],
+            "message": "Prefix updated!"
+        }
+    )
 
-# --- Guild Dashboard ---
-@app.route('/guild/<gid>')
-def guild_page(gid):
-    guilds = session.get('guilds') or []
-
-    if not any(g['id'] == gid for g in guilds):
-        return "Keine Berechtigung", 403
-
-    guild = get_or_create_guild(gid)
-    return render_template('guild.html', guild=guild)
-
-
-# --- Prefix ändern ---
-@app.route('/api/set_prefix/<gid>', methods=['POST'])
-def api_set_prefix(gid):
-    prefix = request.json.get('prefix')
-    set_prefix(gid, prefix)
-    return jsonify({'success': True, 'prefix': prefix})
-
-
-app.run(port=3000)
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="0.0.0.0", port=8000)
