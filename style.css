@@ -1,0 +1,4 @@
+body { font-family: Arial; }
+header { background: #0000ff; padding: 10px; color: white; display:flex; justify-content:space-between; }
+main { padding: 20px; }
+a { color: #00008b; }
