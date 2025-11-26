@@ -1,0 +1,13 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h1>Deine Server</h1>
+{% if guilds %}
+<ul>
+{% for g in guilds %}
+<li><a href="/guild/{{ g.id }}">{{ g.name }}</a></li>
+{% endfor %}
+</ul>
+{% else %}
+<p>Bitte <a href="/login">einloggen</a>.</p>
+{% endif %}
+{% endblock %}
