@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Discord Dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+<h3>Discord Dashboard</h3>
+{% if user %}
+Angemeldet als {{ user.username }}#{{ user.discriminator }}
+{% else %}
+<a href="/login">Login</a>
+{% endif %}
+</header>
+<main>
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>
