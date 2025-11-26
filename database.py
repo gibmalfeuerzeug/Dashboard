@@ -1,49 +1,24 @@
-import sqlite3
+iimport json
+from pathlib import Path
 
+DB_FILE = Path("data.json")
 
-DB = "database.sqlite"
+def load_db():
+    if not DB_FILE.exists():
+        save_db({"users": [], "settings": {}})
+    with open(DB_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
 
+def save_db(data):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
 
-# Initialisierung
-conn = sqlite3.connect(DB)
-cur = conn.cursor()
-cur.execute("CREATE TABLE IF NOT EXISTS guilds (id TEXT PRIMARY KEY, prefix TEXT)")
-conn.commit()
-conn.close()
+# Beispiele
+def add_user(user):
+    db = load_db()
+    db["users"].append(user)
+    save_db(db)
 
-
-# Guild holen oder erstellen
-def get_or_create_guild(gid):
-conn = sqlite3.connect(DB)
-cur = conn.cursor()
-cur.execute("SELECT id, prefix FROM guilds WHERE id=?", (gid,))
-row = cur.fetchone()
-
-
-if not row:
-cur.execute("INSERT INTO guilds (id, prefix) VALUES (?, '!')", (gid,))
-conn.commit()
-row = (gid, '!')
-
-
-conn.close()
-return {'id': row[0], 'prefix': row[1]}
-
-
-# Prefix setzen
-def set_prefix(gid, prefix):
-conn = sqlite3.connect(DB)
-cur = conn.cursor()
-cur.execute("UPDATE guilds SET prefix=? WHERE id=?", (prefix, gid))
-conn.commit()
-conn.close()
-
-
-# Prefix holen
-def get_prefix_for_guild(gid):
-conn = sqlite3.connect(DB)
-cur = conn.cursor()
-cur.execute("SELECT prefix FROM guilds WHERE id=?", (gid,))
-row = cur.fetchone()
-conn.close()
-return row[0] if row else '!'
+def get_users():
+    db = load_db()
+    return db["users"]
